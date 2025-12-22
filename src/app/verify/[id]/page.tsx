@@ -1,0 +1,141 @@
+'use client';
+
+import { useMemo } from "react";
+import { useParams } from "next/navigation";
+import { useReadContract } from "wagmi";
+import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
+
+export default function VerifyProofPage() {
+  const params = useParams<{ id: string }>();
+  const idParam = params?.id;
+
+  const idBigInt = useMemo(() => {
+    if (!idParam) return null;
+    try {
+      const n = BigInt(idParam);
+      if (n < 0n) return null;
+      return n;
+    } catch {
+      return null;
+    }
+  }, [idParam]);
+
+  const {
+    data: total,
+    isLoading: isLoadingCount,
+    error: countError,
+  } = useReadContract({
+    address: proofRegistryAddress as `0x${string}`,
+    abi: proofRegistryAbi,
+    functionName: "proofCount",
+  });
+
+  const isIdInRange =
+    idBigInt !== null &&
+    typeof total === "bigint" &&
+    total > 0n &&
+    idBigInt < (total as bigint);
+
+  const {
+    data: proof,
+    isLoading: isLoadingProof,
+    error: proofError,
+  } = useReadContract({
+    address: proofRegistryAddress as `0x${string}`,
+    abi: proofRegistryAbi,
+    functionName: "getProof",
+    args: idBigInt !== null ? [idBigInt] : undefined,
+    query: {
+      enabled: Boolean(proofRegistryAddress) && isIdInRange,
+    },
+  });
+
+  const isLoading = isLoadingCount || isLoadingProof;
+  const ipfsLink =
+    proof && (proof as any).ipfsHash
+      ? `https://ipfs.io/ipfs/${(proof as any).ipfsHash}`
+      : null;
+
+  const invalid =
+    idBigInt === null ||
+    countError ||
+    (!isLoading && !isIdInRange) ||
+    proofError;
+
+  return (
+    <div className="min-h-screen px-4 py-12 font-sans text-zinc-900 dark:text-zinc-50">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100/90 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-500/10 dark:bg-emerald-500/15 dark:text-emerald-200">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              Verified on Ethereum · Sepolia
+            </p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+              Proof #{idParam ?? "?"}
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              On-chain record of your document&apos;s existence and ownership.
+            </p>
+          </div>
+        </header>
+
+        <div className="rounded-3xl border border-white/10 bg-white/70 p-6 shadow-lg backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.03]">
+          {isLoading ? (
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading proof…</p>
+          ) : invalid ? (
+            <p className="text-sm text-red-500">
+              Could not find a proof with id {idParam}. Please check the id and try again.
+            </p>
+          ) : proof ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Title
+                </p>
+                <p className="text-lg font-semibold text-zinc-900 dark:text-white">
+                  {(proof as any).title || "Untitled proof"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Owner
+                </p>
+                <p className="font-mono text-sm text-zinc-800 dark:text-zinc-200">
+                  {(proof as any).owner}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Timestamp
+                </p>
+                <p className="text-sm text-zinc-800 dark:text-zinc-200">
+                  {new Date(Number((proof as any).timestamp) * 1000).toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  IPFS
+                </p>
+                {ipfsLink ? (
+                  <a
+                    className="text-sm font-semibold text-indigo-600 underline hover:text-indigo-700 dark:text-indigo-300"
+                    href={ipfsLink}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {ipfsLink}
+                  </a>
+                ) : (
+                  <p className="text-sm text-zinc-800 dark:text-zinc-200">No hash available</p>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
