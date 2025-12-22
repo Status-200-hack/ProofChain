@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useReadContract } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
+import Link from "next/link";
 
 type Proof = {
   owner: string;
@@ -61,9 +62,10 @@ export default function ProofList({ refreshKey }: Props) {
             .map((proof, index) => ({ ...proof, index }))
             .reverse()
             .map((proof) => (
-              <div
+              <Link
                 key={proof.index}
-                className="rounded-2xl border border-zinc-200/70 bg-white/90 px-4 py-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/70"
+                href={`/verify/${proof.index}`}
+                className="block rounded-2xl border border-zinc-200/70 bg-white/90 px-4 py-3 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
@@ -82,7 +84,7 @@ export default function ProofList({ refreshKey }: Props) {
                     <p className="font-mono">{shorten(proof.owner)}</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
         </div>
       )}

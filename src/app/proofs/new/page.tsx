@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, FormEvent } from "react";
-import { useAccount, useChainId, useReadContract, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useReadContract, useWriteContract, useSwitchChain } from "wagmi";
 import { sepolia } from "wagmi/chains";
 import { useWaitForTransactionReceipt } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
@@ -11,11 +11,46 @@ import FileUpload from "@/components/FileUpload";
 export default function NewProofPage() {
   const { isConnected } = useAccount();
   const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
 
   const [title, setTitle] = useState("");
   const [cid, setCid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [proofId, setProofId] = useState<bigint | null>(null);
+  const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
+  const handleCopyCID = async () => {
+    if (!cid) return;
+    
+    try {
+      await navigator.clipboard.writeText(cid);
+      setShowToast(true);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = cid;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setShowToast(true);
+      } catch (fallbackErr) {
+        setError('Failed to copy CID');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
 
   const {
     writeContractAsync,
@@ -65,9 +100,17 @@ export default function NewProofPage() {
       setError("Connect your wallet to create a proof.");
       return;
     }
+    // Auto-switch to Sepolia if on wrong network
     if (onWrongNetwork) {
-      setError("Please switch to the Sepolia network.");
-      return;
+      try {
+        await switchChain({ chainId: sepolia.id });
+        setError("Switching to Sepolia network... Please try again.");
+        return;
+      } catch (switchErr: unknown) {
+        const switchMessage = switchErr instanceof Error ? switchErr.message : "Failed to switch network";
+        setError(`Please switch to Sepolia network manually. ${switchMessage}`);
+        return;
+      }
     }
     if (!proofRegistryAddress) {
       setError("Contract address missing. Set NEXT_PUBLIC_PROOF_CONTRACT_ADDRESS.");
@@ -96,7 +139,7 @@ export default function NewProofPage() {
   };
 
   const canSubmit =
-    isConnected && !onWrongNetwork && title.trim().length > 0 && cid && !isPending && !isConfirming;
+    isConnected && !onWrongNetwork && title.trim().length > 0 && cid && !isPending && !isConfirming && !isSwitching;
 
   const etherscanUrl = txHash
     ? `https://sepolia.etherscan.io/tx/${txHash}`
@@ -142,12 +185,32 @@ export default function NewProofPage() {
               <FileUpload onUploaded={(hash) => setCid(hash)} />
 
               {cid ? (
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  IPFS CID selected:{" "}
-                  <span className="font-mono break-all text-zinc-800 dark:text-zinc-200">
-                    {cid}
-                  </span>
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    IPFS CID selected:
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCopyCID}
+                    className="group flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-mono font-semibold text-emerald-700 transition hover:bg-emerald-100 hover:shadow-sm dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                    title="Click to copy CID"
+                  >
+                    <svg
+                      className="h-3.5 w-3.5 transition-transform group-hover:scale-110"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="break-all">{cid}</span>
+                  </button>
+                </div>
               ) : null}
 
               {error ? <p className="text-sm text-red-500">{error}</p> : null}
@@ -187,11 +250,35 @@ export default function NewProofPage() {
                 disabled={!canSubmit}
                 className="mt-2 inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-slate-900/25 transition hover:translate-y-0.5 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-slate-50 dark:text-slate-900 dark:hover:bg-slate-200"
               >
-                {isPending || isConfirming ? "Creating proof..." : "Create proof"}
+                {isSwitching ? "Switching network..." : isPending || isConfirming ? "Creating proof..." : "Create proof"}
               </button>
             </form>
           </div>
         </div>
+        
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg dark:border-emerald-800 dark:bg-emerald-900/90">
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                CID copied to clipboard!
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

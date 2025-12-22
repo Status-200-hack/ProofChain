@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useAccount, useChainId, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useSwitchChain } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
 import { sepolia } from "wagmi/chains";
 import { useWaitForTransactionReceipt } from "wagmi";
@@ -13,6 +13,7 @@ type Props = {
 export default function ProofForm({ onSubmitted }: Props) {
   const { isConnected } = useAccount();
   const chainId = useChainId();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [title, setTitle] = useState("");
   const [ipfsHash, setIpfsHash] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -48,9 +49,17 @@ export default function ProofForm({ onSubmitted }: Props) {
       return;
     }
 
+    // Auto-switch to Sepolia if on wrong network
     if (chainId && chainId !== sepolia.id) {
-      setError("Switch to the Sepolia network.");
-      return;
+      try {
+        await switchChain({ chainId: sepolia.id });
+        setError("Switching to Sepolia network... Please try again.");
+        return;
+      } catch (switchErr: unknown) {
+        const switchMessage = switchErr instanceof Error ? switchErr.message : "Failed to switch network";
+        setError(`Please switch to Sepolia network manually. ${switchMessage}`);
+        return;
+      }
     }
 
     try {
@@ -123,10 +132,10 @@ export default function ProofForm({ onSubmitted }: Props) {
 
       <button
         type="submit"
-        disabled={isPending || isConfirming}
+        disabled={isPending || isConfirming || isSwitching}
         className="mt-4 inline-flex items-center justify-center rounded-full bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isPending || isConfirming ? "Submitting..." : "Register Proof"}
+        {isSwitching ? "Switching network..." : isPending || isConfirming ? "Submitting..." : "Register Proof"}
       </button>
     </form>
   );

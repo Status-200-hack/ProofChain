@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 type Props = {
   onUploaded?: (cid: string) => void;
@@ -11,7 +11,41 @@ export default function FileUpload({ onUploaded }: Props) {
   const [cid, setCid] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showToast]);
+
+  const handleCopyCID = async () => {
+    if (!cid) return;
+    
+    try {
+      await navigator.clipboard.writeText(cid);
+      setShowToast(true);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = cid;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        setShowToast(true);
+      } catch (fallbackErr) {
+        setError('Failed to copy CID');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
 
   const handleUpload = () => {
     setError(null);
@@ -95,17 +129,65 @@ export default function FileUpload({ onUploaded }: Props) {
             {isUploading ? "Uploading..." : "Upload"}
           </button>
           {cid ? (
-            <a
-              href={`https://ipfs.io/ipfs/${cid}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-            >
-              CID: {shorten(cid)}
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopyCID}
+                className="group flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 hover:shadow-sm dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                title="Click to copy CID"
+              >
+                <svg
+                  className="h-4 w-4 transition-transform group-hover:scale-110"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                  />
+                </svg>
+                <span className="font-mono">{shorten(cid)}</span>
+              </button>
+              <a
+                href={`https://ipfs.io/ipfs/${cid}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-semibold text-indigo-600 underline underline-offset-2 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                title="Open in IPFS"
+              >
+                View
+              </a>
+            </div>
           ) : null}
         </div>
         {error ? <p className="text-sm text-red-500">{error}</p> : null}
+        
+        {/* Toast Notification */}
+        {showToast && (
+          <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-lg dark:border-emerald-800 dark:bg-emerald-900/90">
+            <div className="flex items-center gap-2">
+              <svg
+                className="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+                CID copied to clipboard!
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
