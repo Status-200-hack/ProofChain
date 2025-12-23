@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useReadContract } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
+import Image from "next/image";
 
 export default function VerifyProofPage() {
   const params = useParams<{ id: string }>();
@@ -62,6 +63,20 @@ export default function VerifyProofPage() {
     (!isLoading && !isIdInRange) ||
     proofError;
 
+  const [copyLabel, setCopyLabel] = useState("Copy link");
+
+  const handleCopyLink = async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      setCopyLabel("Copied!");
+      setTimeout(() => setCopyLabel("Copy link"), 2000);
+    } catch {
+      setCopyLabel("Failed to copy");
+      setTimeout(() => setCopyLabel("Copy link"), 2000);
+    }
+  };
+
   return (
     <div className="min-h-screen px-4 py-12 font-sans text-zinc-900 dark:text-zinc-50">
       <div className="mx-auto flex max-w-3xl flex-col gap-6">
@@ -69,15 +84,26 @@ export default function VerifyProofPage() {
           <div>
             <p className="inline-flex items-center gap-2 rounded-full bg-emerald-100/90 px-3 py-1 text-xs font-semibold text-emerald-700 shadow-sm ring-1 ring-emerald-500/10 dark:bg-emerald-500/15 dark:text-emerald-200">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Verified on Ethereum · Sepolia
+              Verified on Ethereum (Sepolia)
             </p>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
               Proof #{idParam ?? "?"}
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              On-chain record of your document&apos;s existence and ownership.
+            <p className="mt-2 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                <span className="text-xs">Ξ</span>
+              </span>
+              On-chain record of this document&apos;s existence and ownership on Ethereum Sepolia.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleCopyLink}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-medium text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:hover:border-slate-600"
+          >
+            <span className="text-sm">🔗</span>
+            <span>{copyLabel}</span>
+          </button>
         </header>
 
         <div className="rounded-3xl border border-white/10 bg-white/70 p-6 shadow-lg backdrop-blur-xl dark:border-white/5 dark:bg-white/[0.03]">
