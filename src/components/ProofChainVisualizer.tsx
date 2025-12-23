@@ -35,12 +35,13 @@ export default function ProofChainVisualizer() {
 
   const proofs = useMemo(() => {
     if (!isConnected || !address) return [];
+    const zero = BigInt(0);
     return allProofs
       .map((proof, index) => ({ ...proof, contractId: index }))
       .filter((proof) => proof.owner.toLowerCase() === address.toLowerCase())
       .sort(
         (a, b) =>
-          Number(a.timestamp ?? 0n) - Number(b.timestamp ?? 0n),
+          Number((a.timestamp ?? zero) - (b.timestamp ?? zero)),
       );
   }, [allProofs, isConnected, address]);
 

@@ -21,7 +21,7 @@ describe("ProofRegistry", function () {
     expect(event).to.not.be.undefined;
 
     const count = await proofRegistry.proofCount();
-    expect(count).to.equal(1n);
+    expect(count).to.equal(BigInt(1));
 
     const proof = await proofRegistry.getProof(0);
     expect(proof.owner).to.equal(owner.address);

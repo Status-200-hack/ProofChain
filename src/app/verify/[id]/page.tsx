@@ -14,7 +14,8 @@ export default function VerifyProofPage() {
     if (!idParam) return null;
     try {
       const n = BigInt(idParam);
-      if (n < 0n) return null;
+      const zero = BigInt(0);
+      if (n < zero) return null;
       return n;
     } catch {
       return null;
@@ -34,7 +35,7 @@ export default function VerifyProofPage() {
   const isIdInRange =
     idBigInt !== null &&
     typeof total === "bigint" &&
-    total > 0n &&
+    total > BigInt(0) &&
     idBigInt < (total as bigint);
 
   const {

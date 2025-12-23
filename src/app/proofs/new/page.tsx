@@ -81,8 +81,10 @@ export default function NewProofPage() {
       refetchProofCount()
         .then((result) => {
           const value = result.data as bigint | undefined;
-          if (typeof value === "bigint" && value > 0n) {
-            setProofId(value - 1n);
+          const zero = BigInt(0);
+          const one = BigInt(1);
+          if (typeof value === "bigint" && value > zero) {
+            setProofId(value - one);
           }
         })
         .catch(() => {

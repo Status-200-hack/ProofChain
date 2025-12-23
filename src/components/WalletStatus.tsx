@@ -14,9 +14,10 @@ export default function WalletStatus() {
   const [isMetaMaskInstalled, setIsMetaMaskInstalled] = useState(false);
 
   useEffect(() => {
-    // Check if MetaMask is installed
-    if (typeof window !== 'undefined') {
-      setIsMetaMaskInstalled(Boolean(window.ethereum?.isMetaMask));
+    // Check if MetaMask is installed (typed access to window.ethereum)
+    if (typeof window !== "undefined") {
+      const eth = (window as typeof window & { ethereum?: { isMetaMask?: boolean } }).ethereum;
+      setIsMetaMaskInstalled(Boolean(eth?.isMetaMask));
     }
   }, []);
 
