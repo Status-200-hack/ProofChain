@@ -36,12 +36,7 @@ export default function VerifyProofPage() {
               Enter a proof ID to open its public verification page. No wallet required.
             </p>
           </div>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center rounded-full border border-slate-200/80 bg-white/60 px-4 py-2 text-sm font-medium text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-100 dark:hover:border-slate-600"
-          >
-            ← Back to Home
-          </Link>
+          
         </header>
 
         <form

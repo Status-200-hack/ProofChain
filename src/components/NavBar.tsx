@@ -78,18 +78,26 @@ export default function NavBar() {
                 type="button"
                 onClick={handleConnect}
                 disabled={isConnecting || connectors.length === 0}
-                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-4 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => disconnect()}
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/80 px-3 py-1.5 text-[11px] font-mono font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-white dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-slate-500"
-              >
-                {shortAddress}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => disconnect()}
+                  className="inline-flex items-center justify-center rounded-full bg-red-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm transition hover:bg-red-600"
+                >
+                  <span className="mr-1.5 text-[12px]" aria-hidden="true">
+                    ⏏
+                  </span>
+                  <span>Disconnect</span>
+                </button>
+                <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/90 px-3 py-1.5 text-[11px] font-mono font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100">
+                  {shortAddress}
+                </span>
+              </div>
             )}
           </div>
 
@@ -163,16 +171,24 @@ export default function NavBar() {
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
               </button>
             ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  disconnect();
-                  closeMobile();
-                }}
-                className="flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-[11px] font-mono font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-slate-500"
-              >
-                {shortAddress}
-              </button>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    disconnect();
+                    closeMobile();
+                  }}
+                  className="flex w-full items-center justify-center rounded-full bg-red-500 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-red-600"
+                >
+                  <span className="mr-1.5 text-[12px]" aria-hidden="true">
+                    ⏏
+                  </span>
+                  <span>Disconnect</span>
+                </button>
+                <span className="flex w-full items-center justify-center rounded-full border border-slate-300 bg-white px-3 py-2 text-[11px] font-mono font-semibold text-slate-800 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+                  {shortAddress}
+                </span>
+              </div>
             )}
           </div>
         </div>
