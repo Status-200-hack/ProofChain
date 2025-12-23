@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useReadContract, useAccount } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
 import Link from "next/link";
+import { encodeProofId } from "@/lib/proofId";
 
 type Proof = {
   owner: string;
@@ -85,7 +86,7 @@ export default function ProofList({ refreshKey }: Props) {
             .map((proof) => (
               <Link
                 key={proof.contractId}
-                href={`/verify/${proof.contractId}`}
+                href={`/verify/${encodeProofId(proof.contractId)}`}
                 className="block rounded-2xl border border-zinc-200/70 bg-white/90 px-4 py-3 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-indigo-700 dark:hover:bg-indigo-900/20"
               >
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

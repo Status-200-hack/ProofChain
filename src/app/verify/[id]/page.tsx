@@ -5,22 +5,24 @@ import { useParams } from "next/navigation";
 import { useReadContract } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
 import Image from "next/image";
+import { decodeProofSlug } from "@/lib/proofId";
 
 export default function VerifyProofPage() {
   const params = useParams<{ id: string }>();
-  const idParam = params?.id;
+  const slug = params?.id;
 
   const idBigInt = useMemo(() => {
-    if (!idParam) return null;
+    if (!slug) return null;
     try {
-      const n = BigInt(idParam);
+      const decoded = decodeProofSlug(slug);
+      if (decoded === null) return null;
       const zero = BigInt(0);
-      if (n < zero) return null;
-      return n;
+      if (decoded < zero) return null;
+      return decoded;
     } catch {
       return null;
     }
-  }, [idParam]);
+  }, [slug]);
 
   const {
     data: total,
@@ -88,7 +90,7 @@ export default function VerifyProofPage() {
               Verified on Ethereum (Sepolia)
             </p>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50 sm:text-3xl">
-              Proof #{idParam ?? "?"}
+              Proof {slug ? `#${slug}` : "#"}
             </h1>
             <p className="mt-1 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 sm:mt-2">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
@@ -114,7 +116,7 @@ export default function VerifyProofPage() {
             <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading proof…</p>
           ) : invalid ? (
             <p className="text-sm text-red-500">
-              Could not find a proof with id {idParam}. Please check the id and try again.
+              Could not find a proof with id {slug}. Please check the id and try again.
             </p>
           ) : proof ? (
             <div className="space-y-4">

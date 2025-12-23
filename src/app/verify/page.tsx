@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { encodeProofId, decodeProofSlug } from "@/lib/proofId";
 
 export default function VerifyProofPage() {
   const [proofId, setProofId] = useState("");
@@ -12,7 +13,20 @@ export default function VerifyProofPage() {
     e.preventDefault();
     const trimmed = proofId.trim();
     if (!trimmed) return;
-    router.push(`/verify/${trimmed}`);
+
+    // 1) Try numeric ID (e.g. "0", "4")
+    const numeric = Number(trimmed);
+    if (Number.isSafeInteger(numeric) && numeric >= 0) {
+      const slug = encodeProofId(numeric);
+      router.push(`/verify/${slug}`);
+      return;
+    }
+
+    // 2) Fallback: treat input as an encoded slug (e.g. "l62t")
+    const decoded = decodeProofSlug(trimmed);
+    if (decoded !== null) {
+      router.push(`/verify/${trimmed}`);
+    }
   };
 
   return (
@@ -56,7 +70,7 @@ export default function VerifyProofPage() {
                 type="text"
                 value={proofId}
                 onChange={(e) => setProofId(e.target.value)}
-                placeholder="Enter proof ID (e.g., 0, 1, 2...)"
+                placeholder="Enter proof ID or link code (e.g., 0 or l62t)"
                 className="w-full rounded-2xl border border-zinc-200 bg-white/70 px-4 py-3 text-sm text-zinc-900 shadow-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-white dark:focus:border-indigo-400 dark:focus:ring-indigo-900/40"
                 required
               />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAccount, useReadContract } from "wagmi";
 import { proofRegistryAbi, proofRegistryAddress } from "@/lib/abi/proofRegistry";
 import { useEffect, useMemo, useRef } from "react";
+import { encodeProofId } from "@/lib/proofId";
 
 type Proof = {
   owner: string;
@@ -142,7 +143,7 @@ function BlockItem({ proof, index, total }: BlockItemProps) {
   return (
     <>
       <Link
-        href={`/verify/${proof.contractId}`}
+        href={`/verify/${encodeProofId(proof.contractId)}`}
         className={`group pc-block relative inline-flex min-w-[130px] flex-col rounded-2xl bg-gradient-to-br px-3 py-3 text-xs shadow-[0_12px_30px_rgba(15,23,42,0.55)] outline-none ring-1 sm:min-w-[150px] ${
           isGenesis
             ? "from-cyan-400/50 via-slate-900 to-slate-950 ring-cyan-300/60"
